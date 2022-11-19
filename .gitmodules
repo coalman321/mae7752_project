@@ -4,3 +4,6 @@
 [submodule "src/ros2_controllers"]
 	path = src/ros2_controllers
 	url = https://github.com/ros-controls/ros2_controllers.git
+[submodule "src/Universal_Robots_ROS2_Description"]
+	path = src/Universal_Robots_ROS2_Description
+	url = https://github.com/UniversalRobots/Universal_Robots_ROS2_Description.git
