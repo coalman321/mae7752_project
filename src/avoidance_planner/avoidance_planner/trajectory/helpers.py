@@ -3,7 +3,11 @@ Description:
 
 List of helper functions called by functions.py script. Includes the following functions:
 
-script_name -- Description
+obstacle_detection      --      A script to detect intersection with an obstacle in the list of obstacles
+distance                --      A script that computes the magnitude distance between two nodes
+unit_vector             --      A script that computes the 2D unit vector between two nodes
+bias                    --      Computes a random set of coords in the cspace with a biased percentage reduction to end
+scale                   --      Returns the scaled value or a single or set of coords from the real world to GUI window
 
 """
 
@@ -62,7 +66,7 @@ def obstacle_detection(origin_point, test_point, obstacles):
             radius = distance(Node(sample_point), Node(obstacle.center))
 
             # If the distance to the obstacle is less than the obstacle's radius, mark the step as a collision
-            if radius < (obstacle.radius + c.BUFFER):
+            if radius < (obstacle.radius + c.BUFFER + c.EE_RAD):
                 collision = True
                 break
 
@@ -112,8 +116,8 @@ def bias_rand(end_coords):
     """
 
     # Compute a random set of XY points in the configuration space
-    x_rand = rand.randrange(0, c.CSPACE[0], 1)
-    y_rand = rand.randrange(0, c.CSPACE[1], 1)
+    x_rand = rand.randrange(0, 100, 1) * c.CSPACE[0]/100
+    y_rand = rand.randrange(0, 100, 1) * c.CSPACE[1]/100
 
     # Reduce the distance from the XY points to the end coordinates by the percent bias
     x_rand = x_rand + (end_coords[0] - x_rand) * c.BIAS
@@ -121,3 +125,19 @@ def bias_rand(end_coords):
 
     # Return the biased random XY coordinates
     return [x_rand, y_rand]
+
+
+def scale(coords):
+    """
+    Returns the scaled value or a single or set of coordinates from the real world to GUI window
+
+    :param coords:      one or more coordinate values in the configuration space
+    :return:            one or more coordinates scaled to the GUI window
+    """
+
+    if type(coords) is (float or int):
+        coords = c.RATIO*coords
+    elif type(coords) is list:
+        coords = [c.RATIO*coord for coord in coords]
+
+    return coords

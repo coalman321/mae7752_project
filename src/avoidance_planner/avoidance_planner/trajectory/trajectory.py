@@ -23,20 +23,31 @@ from functions import *
 
 class Obstacle:
 
-    def __init__(self, center, radius):
+    def __init__(self, center, type):
         self.center = center
-        self.radius = radius
 
+        radii = {
+            'bowl': 0.0700,
+            'cup': 0.0475,
+            'plate': 0.1275,
+            'UR5': 0.0750
+        }
+
+        self.radius = radii[type]
 
 def main():
-    obstacles = [Obstacle([100, 100], 10),
-                 Obstacle([200, 200], 30),
-                 Obstacle([400, 50], 40),
-                 Obstacle([700, 100], 15),
-                 Obstacle([300, 150], 50)]
+    # Plate is 0.255 m Diameter
+    # Cup is 0.095 m Diameter
+    # Bowl is 0.140 m Diameter
 
-    start_coords = [50, 50]
-    end_coords = [500, 220]
+    obstacles = [Obstacle([0.910, 0.110], 'UR5'),
+                 Obstacle([1.380, 0.530], 'cup'),
+                 Obstacle([1.300, 0.155], 'cup'),
+                 Obstacle([0.910, 0.340], 'bowl'),
+                 Obstacle([0.390, 0.480], 'plate'),]
+
+    start_coords = [1.745, 0.055]
+    end_coords = [0.350, 0.120]
 
     trajectory = rrt_star(start_coords, end_coords, obstacles)
 
@@ -47,7 +58,7 @@ def main():
                 if event.type == pygame.QUIT:
                     running = False
 
-    trajectory = smooth_trajectory(trajectory)
+    #trajectory = smooth_trajectory(trajectory)
 
 
 if __name__ == '__main__':

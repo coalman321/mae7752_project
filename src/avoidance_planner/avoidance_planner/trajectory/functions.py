@@ -4,7 +4,7 @@ Description:
 List of primary functions called by trajectory.py script. Includes the following functions:
 
 rrt_star()          --      Creates list of nodes for desired trajectory using the RRT* planning algorithm in 2D space
-smoothTrajectory    --      Smooths a list of trajectory waypoints using fifth order polynomial approximation method
+smoothTrajectory    --      Smooths a list of trajectory waypoints using interpolated splines
 
 """
 
@@ -13,8 +13,8 @@ import sys
 import pygame
 from pygame.locals import *
 from helpers import *
-from scipy.interpolate import splrep, splev
-import matplotlib.pyplot as plt
+from scipy import interpolate
+import time
 
 
 def rrt_star(start_coords, end_coords, obstacles):
@@ -30,18 +30,19 @@ def rrt_star(start_coords, end_coords, obstacles):
     if c.VISUAL:
         # Create the pygame GUI
         pygame.init()                                       # Initialize pygame GUi
-        screen = pygame.display.set_mode(c.CSPACE)          # Set screen size to configuration space
+        screen = pygame.display.set_mode(scale(c.CSPACE))   # Set screen size to configuration space
         pygame.display.set_caption('UR5 RRTstar Planner')   # Create a display name for the GUI
-        screen.fill([255, 255, 255])                        # Fill the screen with a white background
+        screen.fill([245, 222, 179])                        # Fill the screen with a wheat background
 
         # For each obstacle in the list of obstacles
         for obstacle in obstacles:
             # Draw a red circle at the give obstacle center with the given obstacle radius
-            pygame.draw.circle(screen, [255, 0, 0], (obstacle.center[0], obstacle.center[1]), obstacle.radius)
+            pygame.draw.circle(screen, [25, 25, 112],
+                               (scale(obstacle.center[0]), scale(obstacle.center[1])), scale(obstacle.radius))
 
         # Draw a blue and green circle for the location of the start and end coordinates
-        pygame.draw.circle(screen, [0, 0, 255], start_coords, 5)
-        pygame.draw.circle(screen, [0, 255, 0], end_coords, 5)
+        pygame.draw.circle(screen, [255, 0, 0], scale(start_coords), 10)
+        pygame.draw.circle(screen, [0, 255, 0], scale(end_coords), 10)
 
     # Define the start node, end node, and node list
     start = Node(start_coords)                          # the starting node
@@ -91,7 +92,7 @@ def rrt_star(start_coords, end_coords, obstacles):
             # Add the new node to the node list and draw a line on the GUI from the closest node to the new node
             node_list.append(new_node)
             if c.VISUAL:
-                pygame.draw.line(screen, [20, 20, 20], closest_node.coords, new_node.coords)
+                pygame.draw.line(screen, [20, 20, 20], scale(closest_node.coords), scale(new_node.coords))
 
             # For each node and index in the node list
             for node in node_list:
@@ -109,8 +110,8 @@ def rrt_star(start_coords, end_coords, obstacles):
 
                     if c.VISUAL:
                         # Erase the previous node line and replace with the new updated node line
-                        pygame.draw.line(screen, [255, 255, 255], node.coords, node.parent.coords)
-                        pygame.draw.line(screen, [20, 20, 20], node.coords, new_node.coords)
+                        pygame.draw.line(screen, [255, 255, 255], scale(node.coords), scale(node.parent.coords))
+                        pygame.draw.line(screen, [20, 20, 20], scale(node.coords), scale(new_node.coords))
 
             if c.VISUAL:
                 # Update the GUI display
@@ -133,24 +134,37 @@ def rrt_star(start_coords, end_coords, obstacles):
     while end_node is not start:
         # Draw a line from the end node to its parent and update the end node as its parent node
         if c.VISUAL:
-            pygame.draw.line(screen, [0, 255, 0], end_node.coords, end_node.parent.coords, 5)
+            pygame.draw.line(screen, [0, 255, 0], scale(end_node.coords), scale(end_node.parent.coords), 5)
         end_node = end_node.parent
 
         # Add the end node to the list of the final trajectory path nodes
         trajectory.insert(0, end_node)
 
+    # Smooth the current trajectory
+    x, y = smooth_trajectory(trajectory)
+
     if c.VISUAL:
         # Update the GUI display
+        pygame.display.update()
+
+        # Sleep for two seconds to allow viewing of un-smoothed trajectory
+        time.sleep(2)
+
+        # For each spline in the trajectory, plot the smoothed spline on the GUI
+        for i in range(0, len(x)-1):
+            pygame.draw.line(screen, [255, 0, 255], scale([x[i], y[i]]), scale([x[i+1], y[i+1]]), 7)
+
+        # Update the GUI display and send closing message
         pygame.display.update()
         print('Please exit the GUI window to continue...')
 
     # Return the list of nodes for the desired trajectory
-    return trajectory
+    return [x, y]
 
 
 def smooth_trajectory(trajectory):
     """
-    Smooths a list of XY trajectory waypoints in 2D space using fifth order polynomial approximation smoothing method.
+    Smooths a list of XY trajectory waypoints in 2D space using interpolated splines.
 
     :param trajectory:      List of XY trajectory node waypoints
     :return:                Smoothed list of XY trajectory node waypoints
@@ -158,18 +172,12 @@ def smooth_trajectory(trajectory):
 
     # Compute the domain and range lists of the XY coordinate points of the original trajectory
     domain = [node.x for node in trajectory]
-    range = [-node.y for node in trajectory]
+    range = [node.y for node in trajectory]
 
-    # Compute the smoothed range values using a fifth order polynomial approximation method
-    poly = np.polyfit(domain, range, 5)
-    poly_y = np.poly1d(poly)(domain)
+    # Compute the smoothed range values using 1000 interpolated spines
+    t_ = np.linspace(0, 1, len(domain)*5)
+    tck, u = interpolate.splprep([domain, range], s=0)
+    x, y = interpolate.splev(t_, tck)
 
-    # Plot the original XY coordinates of the trajectory and the smoothed trajectory
-    plt.figure()
-    plt.plot(domain, poly_y)
-    plt.plot(domain, range)
-    plt.show()
-
-    # Return the smoothed trajectory as a 2xN NumPy 2D array
-    smooth = np.array([domain, poly_y])
-    return smooth
+    # Return the smoothed trajectory as an X and Y list
+    return list(x), list(y)
