@@ -30,7 +30,7 @@ install(TARGETS ik_exec
 
 
 # install the launch files
-install(DIRECTORY launch
+install(DIRECTORY launch config
   DESTINATION share/${PROJECT_NAME})
 
 
