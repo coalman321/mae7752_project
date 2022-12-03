@@ -18,7 +18,7 @@ constants.py    --      List of constants imported to trajectory.py and function
 
 """
 
-from functions import *
+from avoidance_planner.trajectory.functions import *
 
 
 class Obstacle:
@@ -35,22 +35,31 @@ class Obstacle:
 
         self.radius = radii[type]
 
-def main():
+def generate_trajectory(start_coords, end_coords):
     # Plate is 0.255 m Diameter
     # Cup is 0.095 m Diameter
     # Bowl is 0.140 m Diameter
 
-    obstacles = [Obstacle([0.910, 0.110], 'UR5'),
+    obstacles = [Obstacle([c.BASE_LINK], 'UR5'),
                  Obstacle([1.380, 0.530], 'cup'),
                  Obstacle([1.300, 0.155], 'cup'),
                  Obstacle([0.910, 0.340], 'bowl'),
-                 Obstacle([0.390, 0.480], 'plate'),]
+                 Obstacle([0.390, 0.480], 'plate')]
 
-    start_coords = [1.745, 0.055]
-    end_coords = [0.350, 0.120]
+    # Hard coded coordinates with origin at top left corner
+    # start_coords = [1.643, 0.055]
+    # end_coords = [0.350, 0.120]
 
+    # Define the Z offset, starting XY coordinates, and ending XY coordinates for path planner
+    # To convert to GUI frame, coordinates must be offset by UR5 base link location and cup rim offset
+    z = start_coords.z
+    start_coords = [start_coords.x + c.BASE_LINK[0], start_coords.y + c.BASE_LINK[1] - c.EE_RAD]
+    end_coords = [end_coords.x + c.BASE_LINK[0], end_coords.y + c.BASE_LINK[1] - c.EE_RAD]
+
+    # Compute the trajectory using the RRT star method
     trajectory = rrt_star(start_coords, end_coords, obstacles)
 
+    # If the visual is desired, listen for GUI close event
     if c.VISUAL:
         running = True
         while running:
@@ -58,12 +67,15 @@ def main():
                 if event.type == pygame.QUIT:
                     running = False
 
-    #trajectory = smooth_trajectory(trajectory)
+    # For each point in the planned trajectory
+    for point in trajectory:
+        # Convert XYZ back to UR5 world frame with desired Z offset
+        point[0] = -(point[0] - c.BASE_LINK[0])
+        point[1] = -(point[1] - c.BASE_LINK[1] + c.EE_RAD)
+        point.append(z)
 
-
-if __name__ == '__main__':
-    main()
-
+    # Return the list of [x, y, z] points
+    return trajectory
 
 
 
