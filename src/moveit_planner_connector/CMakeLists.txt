@@ -8,6 +8,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(avoid_plan_msgs REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 find_package(moveit_visual_tools REQUIRED)
 
@@ -21,10 +22,17 @@ ament_target_dependencies(ik_exec
   rclcpp 
   moveit_ros_planning_interface
   moveit_visual_tools
+  avoid_plan_msgs
   )
 
 install(TARGETS ik_exec
   DESTINATION lib/${PROJECT_NAME})
+
+
+# install the launch files
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME})
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

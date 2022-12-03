@@ -21,6 +21,7 @@
                 "/home/coalman321/mae_7752/mae7752_project/install/forward_command_controller/include/**",
                 "/home/coalman321/mae_7752/mae7752_project/install/force_torque_sensor_broadcaster/include/**",
                 "/home/coalman321/mae_7752/mae7752_project/install/diff_drive_controller/include/**",
+                "/home/coalman321/mae_7752/mae7752_project/install/avoid_plan_msgs/include/**",
                 "/home/coalman321/osu-uwrt/dependencies/install/vectornav/include/**",
                 "/home/coalman321/osu-uwrt/dependencies/install/vectornav_msgs/include/**",
                 "/home/coalman321/osu-uwrt/riptide_software/install/riptide_rviz/include/**",
