@@ -11,7 +11,7 @@ scale                   --      Returns the scaled value or a single or set of c
 
 """
 
-import constants as c
+import avoidance_planner.trajectory.constants as c
 import random as rand
 from math import sqrt
 import numpy as np

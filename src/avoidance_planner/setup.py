@@ -20,7 +20,13 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'planner = avoidance_planner.planner:main'
+            'planner = avoidance_planner.planner:main',
+            'trajectory = avoidance_planner.trajectory.trajectory:main'
         ],
     },
+    py_modules=[
+        "avoidance_planner.trajectory.functions",
+        "avoidance_planner.trajectory.helpers",
+        "avoidance_planner.trajectory.constants"
+    ]
 )

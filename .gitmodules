@@ -7,3 +7,9 @@
 [submodule "src/Universal_Robots_ROS2_Description"]
 	path = src/Universal_Robots_ROS2_Description
 	url = https://github.com/UniversalRobots/Universal_Robots_ROS2_Description.git
+[submodule "src/moveit2_tutorials"]
+	path = src/moveit2_tutorials
+	url = https://github.com/ros-planning/moveit2_tutorials.git
+[submodule "src/moveit_task_constructor"]
+	path = src/moveit_task_constructor
+	url = https://github.com/ros-planning/moveit_task_constructor.git

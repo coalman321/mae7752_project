@@ -1,0 +1,7 @@
+# Request Body
+nav_msgs/Path path_in
+
+
+---
+# Response Body
+nav_msgs/Path path_out

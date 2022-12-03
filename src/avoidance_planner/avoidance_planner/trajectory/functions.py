@@ -12,7 +12,7 @@ from tqdm import tqdm
 import sys
 import pygame
 from pygame.locals import *
-from helpers import *
+from avoidance_planner.trajectory.helpers import *
 from scipy import interpolate
 import time
 
