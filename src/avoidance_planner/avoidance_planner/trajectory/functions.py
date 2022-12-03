@@ -159,7 +159,11 @@ def rrt_star(start_coords, end_coords, obstacles):
         print('Please exit the GUI window to continue...')
 
     # Return the list of nodes for the desired trajectory
-    return [x, y]
+    points = []
+    for i in range(len(x)):
+        points.append([x[i], y[i]])
+
+    return points
 
 
 def smooth_trajectory(trajectory):
