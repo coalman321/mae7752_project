@@ -6,6 +6,7 @@ from avoid_plan_msgs.srv import MakePlan
 
 class PlannerNode(Node):
     def __init__(self):
+        super().__init__('make_plan_node')
         # make a service server
 
         self.server = self.create_service(MakePlan, 'make_plan', self.make_path)
@@ -24,7 +25,7 @@ class PlannerNode(Node):
         # fill out the Z height
 
         # push the data into the message
-        
+
 
         return response
 
