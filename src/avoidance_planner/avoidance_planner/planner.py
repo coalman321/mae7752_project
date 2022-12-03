@@ -1,19 +1,32 @@
 import rclpy
 from rclpy.node import Node
 from avoidance_planner.trajectory.functions import rrt_star
+from avoid_plan_msgs.srv import MakePlan
 
 
 class PlannerNode(Node):
     def __init__(self):
         # make a service server
 
-        self.server = self.create_service()
+        self.server = self.create_service(MakePlan, 'make_plan', self.make_path)
 
         pass
 
     # service server callback, calls rrt* routine
-    def make_path(self):
-        pass
+    def make_path(self, request, response):
+        # request contians the path, response should contain the result at the end
+
+        # copy the frame ID
+        response.path_out.header = request.path_in.header 
+
+        # do the planning bit
+
+        # fill out the Z height
+
+        # push the data into the message
+        
+
+        return response
 
 
 
