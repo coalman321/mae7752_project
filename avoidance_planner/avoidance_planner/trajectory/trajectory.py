@@ -40,7 +40,7 @@ def generate_trajectory(start_coords, end_coords):
     # Cup is 0.095 m Diameter
     # Bowl is 0.140 m Diameter
 
-    obstacles = [Obstacle([c.BASE_LINK], 'UR5'),
+    obstacles = [Obstacle(c.BASE_LINK, 'UR5'),
                  Obstacle([1.380, 0.530], 'cup'),
                  Obstacle([1.300, 0.155], 'cup'),
                  Obstacle([0.910, 0.340], 'bowl'),
