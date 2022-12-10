@@ -40,7 +40,7 @@ def generate_trajectory(start_coords, end_coords):
     # Cup is 0.095 m Diameter
     # Bowl is 0.140 m Diameter
 
-    obstacles = [Obstacle([c.BASE_LINK], 'UR5'),
+    obstacles = [Obstacle(c.BASE_LINK, 'UR5'),
                  Obstacle([1.380, 0.530], 'cup'),
                  Obstacle([1.300, 0.155], 'cup'),
                  Obstacle([0.910, 0.340], 'bowl'),
@@ -53,8 +53,8 @@ def generate_trajectory(start_coords, end_coords):
     # Define the Z offset, starting XY coordinates, and ending XY coordinates for path planner
     # To convert to GUI frame, coordinates must be offset by UR5 base link location and cup rim offset
     z = start_coords.z
-    start_coords = [-start_coords.x + c.BASE_LINK[0], -start_coords.y + c.BASE_LINK[1] - c.EE_RAD]
-    end_coords = [-end_coords.x + c.BASE_LINK[0], -end_coords.y + c.BASE_LINK[1] - c.EE_RAD]
+    start_coords = [-start_coords.x + c.BASE_LINK[0], -start_coords.y + c.BASE_LINK[1] + c.EE_RAD]
+    end_coords = [-end_coords.x + c.BASE_LINK[0], -end_coords.y + c.BASE_LINK[1] + c.EE_RAD]
 
     # Compute the trajectory using the RRT star method
     trajectory = rrt_star(start_coords, end_coords, obstacles)
@@ -71,7 +71,7 @@ def generate_trajectory(start_coords, end_coords):
     for point in trajectory:
         # Convert XYZ back to UR5 world frame with desired Z offset
         point[0] = -(point[0] - c.BASE_LINK[0])
-        point[1] = -(point[1] - c.BASE_LINK[1] + c.EE_RAD)
+        point[1] = (point[1] - c.BASE_LINK[1] - c.EE_RAD)
         point.append(z)
 
     # Return the list of [x, y, z] points

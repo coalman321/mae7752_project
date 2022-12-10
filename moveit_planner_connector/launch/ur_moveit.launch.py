@@ -251,6 +251,7 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             robot_description,
             robot_description_semantic,
+            robot_description_kinematics,
         ]
     )
 

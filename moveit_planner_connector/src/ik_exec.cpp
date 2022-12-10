@@ -95,8 +95,8 @@ class IKExecutorNode: public rclcpp::Node{
     startingPose.orientation.y = -0.7071067811865476;
     startingPose.orientation.z = 0.0;
     startingPose.position.x = -0.735;
-    startingPose.position.y = -0.055;
-    startingPose.position.z = 0.35;
+    startingPose.position.y =  0.000;
+    startingPose.position.z =  0.350;
 
     geometry_msgs::msg::Pose endingPose;
     endingPose.orientation.w = 0.0;
@@ -104,8 +104,8 @@ class IKExecutorNode: public rclcpp::Node{
     endingPose.orientation.y = -0.7071067811865476;
     endingPose.orientation.z = 0.0;
     endingPose.position.x = 0.560;
-    endingPose.position.y = -0.055;
-    endingPose.position.z = 0.35;
+    endingPose.position.y = 0.000;
+    endingPose.position.z = 0.350;
 
     // Record the starting pose of the robot to return to later
     end_link_name_ = get_parameter("end_link").as_string();
@@ -176,12 +176,13 @@ class IKExecutorNode: public rclcpp::Node{
 
     RCLCPP_INFO(get_logger(), "Planning response recieved");
     
-
     // read the new points out
     auto result = future.get();
+    plannerPoints.push_back(startingPose);
     for(auto poseStapmed : result->path_out.poses){
       plannerPoints.push_back(poseStapmed.pose);
     }
+    plannerPoints.push_back(endingPose);
 
     RCLCPP_INFO_STREAM(get_logger(), "Timing path into trajectory with refrence frame "
       << mv_grp_interf_->getPoseReferenceFrame());
@@ -189,17 +190,29 @@ class IKExecutorNode: public rclcpp::Node{
 
     // Send the points into moveit
     moveit_msgs::msg::RobotTrajectory trajectory;
-    const double jump_threshold = 0.05; // this can cause big moves for physical hardware if zero
+    const double jump_threshold = 10.0; // this can cause big moves for physical hardware if zero
     const double eef_step = 0.01;
     double fraction = mv_grp_interf_->computeCartesianPath(plannerPoints, eef_step, jump_threshold, trajectory);
     RCLCPP_INFO(get_logger(), "path planned successfully (%.2f%% acheived)", fraction * 100.0);
 
-    if(fraction < 0.98){
+    viz_tools_->deleteAllMarkers();
+    viz_tools_->publishText(endingPose, "Joint Space Goal", rvt::WHITE, rvt::LARGE);
+    viz_tools_->publishPath(plannerPoints, rvt::LIME_GREEN, rvt::SMALL);
+    for (std::size_t i = 0; i < plannerPoints.size(); ++i)
+      viz_tools_->publishAxisLabeled(plannerPoints[i], "pt" + std::to_string(i), rvt::SMALL);
+
+    viz_tools_->trigger();
+
+    if(fraction < 0.20){
       RCLCPP_FATAL(get_logger(), "Trajectory building failed");
       return;
     }
 
+    // wait for gripper to open
+    viz_tools_->prompt("Execute obstacle path?");
+
     // execute cup move plan
+    mv_grp_interf_->execute(trajectory);
 
     // wait for gripper to open
     viz_tools_->prompt("Please open gripper");
@@ -221,7 +234,14 @@ class IKExecutorNode: public rclcpp::Node{
 
   bool moveToPoint(geometry_msgs::msg::Pose target_pose){
     // Set a target Pose into moveit
-    mv_grp_interf_->setPoseTarget(target_pose);
+    mv_grp_interf_->setGoalPositionTolerance(0.01);
+    mv_grp_interf_->setGoalOrientationTolerance(0.01);
+    // mv_grp_interf_->setPoseTarget(target_pose);
+    bool ikOk = mv_grp_interf_->setApproximateJointValueTarget(target_pose);
+    if(! ikOk){
+      RCLCPP_WARN(get_logger(), "Unable to find approximate IK solution for goal pose");
+      return false;
+    }
 
     // Create a plan to the target pose
     moveit::planning_interface::MoveGroupInterface::Plan msg;
@@ -269,15 +289,6 @@ class IKExecutorNode: public rclcpp::Node{
     plan_runner_thread_.join();
   }
 
-  /*
-  viz_tools_->deleteAllMarkers();
-      viz_tools_->publishText(text_pose, "Joint Space Goal", rvt::WHITE, rvt::XLARGE);
-      viz_tools->publishPath(waypoints, rvt::LIME_GREEN, rvt::SMALL);
-      for (std::size_t i = 0; i < waypoints.size(); ++i)
-        viz_tools->publishAxisLabeled(waypoints[i], "pt" + std::to_string(i), rvt::SMALL);
-      viz_tools->trigger();
-      viz_tools->prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
-  */
 
   private:
     // names for key links / items
