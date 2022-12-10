@@ -19,6 +19,7 @@ class PlannerNode(Node):
         # request contians the path, response should contain the result at the end
 
         self.get_logger().info("Recieved path planning request")
+        print(request)
 
         # copy the frame ID
         response.path_out.header = request.path_in.header
