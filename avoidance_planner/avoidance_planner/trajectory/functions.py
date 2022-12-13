@@ -178,7 +178,9 @@ def smooth_trajectory(trajectory):
     domain = [node.x for node in trajectory]
     range = [node.y for node in trajectory]
 
-    # Compute the smoothed range values using 1000 interpolated spines
+    # Compute the smoothed range values using interpolated splines for five times the original number of nodes
+    # The lowest available smoothing coefficient, s=0, is used to prevent issues with the node list when passed to Moveit
+    # Please refer to the SciPy documentation for B-Spline smoothing for more information
     t_ = np.linspace(0, 1, len(domain)*5)
     tck, u = interpolate.splprep([domain, range], s=0)
     x, y = interpolate.splev(t_, tck)

@@ -24,31 +24,25 @@ from avoidance_planner.trajectory.functions import *
 class Obstacle:
 
     def __init__(self, center, type):
+        # Initialize center of obstacle
         self.center = center
-
+        
+        # Select radius from list of radii of each obstacle
         radii = {
             'bowl': 0.0700,
             'cup': 0.0475,
             'plate': 0.1275,
             'UR5': 0.0750
         }
-
         self.radius = radii[type]
 
 def generate_trajectory(start_coords, end_coords):
-    # Plate is 0.255 m Diameter
-    # Cup is 0.095 m Diameter
-    # Bowl is 0.140 m Diameter
-
+    # Define list of obstacles (UR5 base, two cups, bowl, and plate)
     obstacles = [Obstacle(c.BASE_LINK, 'UR5'),
                  Obstacle([1.380, 0.530], 'cup'),
                  Obstacle([1.300, 0.155], 'cup'),
                  Obstacle([0.910, 0.340], 'bowl'),
                  Obstacle([0.390, 0.480], 'plate')]
-
-    # Hard coded coordinates with origin at top left corner
-    # start_coords = [1.643, 0.055]
-    # end_coords = [0.350, 0.120]
 
     # Define the Z offset, starting XY coordinates, and ending XY coordinates for path planner
     # To convert to GUI frame, coordinates must be offset by UR5 base link location and cup rim offset
