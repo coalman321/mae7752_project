@@ -88,7 +88,7 @@ class IKExecutorNode: public rclcpp::Node{
       return;
     }
 
-    // Retrieve the set of points
+    // use a set of constant points
     geometry_msgs::msg::Pose startingPose;
     startingPose.orientation.w = 0.0;
     startingPose.orientation.x = 0.7071067811865476;
@@ -97,6 +97,9 @@ class IKExecutorNode: public rclcpp::Node{
     startingPose.position.x = -0.735;
     startingPose.position.y =  0.000;
     startingPose.position.z =  0.350;
+
+    geometry_msgs::msg::Pose cupStartPose(startingPose);
+    cupStartPose.position.z =  0.310;
 
     geometry_msgs::msg::Pose endingPose;
     endingPose.orientation.w = 0.0;
@@ -107,12 +110,14 @@ class IKExecutorNode: public rclcpp::Node{
     endingPose.position.y = 0.000;
     endingPose.position.z = 0.350;
 
+    geometry_msgs::msg::Pose cupEndPose(endingPose);
+    cupEndPose.position.z =  0.315;
+
     // Record the starting pose of the robot to return to later
     end_link_name_ = get_parameter("end_link").as_string();
     const auto initalPose = mv_grp_interf_->getCurrentPose(end_link_name_).pose;
 
-    // wait for gripper to close
-    viz_tools_->prompt("Ready to run path?");
+    viz_tools_->prompt("Proceed with planned motion");
 
     // exceute plan from starting pose to path starting point
     bool success = false;
@@ -128,8 +133,39 @@ class IKExecutorNode: public rclcpp::Node{
       }
     }
 
+    // used for testing motions indvidually
+    // viz_tools_->prompt("Moving down to cup");
+
+    // execute plan and move to cup pose
+    success = false;
+    while(! success){
+      success = moveToPoint(cupStartPose);
+      if(! success){
+        RCLCPP_ERROR(get_logger(), "Failed to move robot to cup");
+        auto res = viz_tools_->prompt("Retry?");
+        if(! res){
+          RCLCPP_WARN(get_logger(), "User requested stop, after move failure");
+          return;
+        }
+      }
+    }
+
     // wait for gripper to close
     viz_tools_->prompt("Please close gripper");
+
+    // execute plan and move back to path starting point
+    success = false;
+    while(! success){
+      success = moveToPoint(startingPose);
+      if(! success){
+        RCLCPP_ERROR(get_logger(), "Failed to move robot to starting point");
+        auto res = viz_tools_->prompt("Retry?");
+        if(! res){
+          RCLCPP_WARN(get_logger(), "User requested stop, after move failure");
+          return;
+        }
+      }
+    }
 
     // make the three stage trajectory
     std::vector<geometry_msgs::msg::Pose> waypoints, plannerPoints;
@@ -167,7 +203,6 @@ class IKExecutorNode: public rclcpp::Node{
 
     auto future = planner_client_->async_send_request(request);
     while(! future.valid()){
-
       // check that we havent shut down
       if(! rclcpp::ok()){
         return;
@@ -184,7 +219,7 @@ class IKExecutorNode: public rclcpp::Node{
     }
     plannerPoints.push_back(endingPose);
 
-    RCLCPP_INFO_STREAM(get_logger(), "Timing path into trajectory with refrence frame "
+    RCLCPP_INFO_STREAM(get_logger(), "Planning joint space trajectory in coordinate frame: "
       << mv_grp_interf_->getPoseReferenceFrame());
 
 
@@ -208,14 +243,42 @@ class IKExecutorNode: public rclcpp::Node{
       return;
     }
 
-    // wait for gripper to open
-    viz_tools_->prompt("Execute obstacle path?");
+    // used for debugging path planning
+    // viz_tools_->prompt("Execute obstacle path?");
 
     // execute cup move plan
     mv_grp_interf_->execute(trajectory);
 
+    // execute plan and move to ending cup pose
+    success = false;
+    while(! success){
+      success = moveToPoint(cupEndPose);
+      if(! success){
+        RCLCPP_ERROR(get_logger(), "Failed to move robot to cup dropoff");
+        auto res = viz_tools_->prompt("Retry?");
+        if(! res){
+          RCLCPP_WARN(get_logger(), "User requested stop, after move failure");
+          return;
+        }
+      }
+    }
+
     // wait for gripper to open
     viz_tools_->prompt("Please open gripper");
+
+    // execute plan and move up out of the end cup pose
+    success = false;
+    while(! success){
+      success = moveToPoint(endingPose);
+      if(! success){
+        RCLCPP_ERROR(get_logger(), "Failed to move robot to post dropoff location");
+        auto res = viz_tools_->prompt("Retry?");
+        if(! res){
+          RCLCPP_WARN(get_logger(), "User requested stop, after move failure");
+          return;
+        }
+      }
+    }
 
     // execute plan from path end point back to robot starting pose
     success = false;
@@ -258,10 +321,11 @@ class IKExecutorNode: public rclcpp::Node{
       viz_tools_->publishTrajectoryLine(msg.trajectory_, jmg);
       viz_tools_->trigger();
 
-      if(! viz_tools_->prompt("Path ready. Execute?")){
-        RCLCPP_WARN(get_logger(), "User cancelled path");
-        return false;
-      }
+      // Used for debugging path planning
+      // if(! viz_tools_->prompt("Path ready. Execute?")){
+      //   RCLCPP_WARN(get_logger(), "User cancelled path");
+      //   return false;
+      // }
 
 
       // Execute the plan if it was able to make a plan
